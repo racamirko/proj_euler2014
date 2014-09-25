@@ -1,23 +1,28 @@
-places = 1000
+places = 5000
 
 def find_max_pattern(vec):
-	cur_max = -1
-	cur_offset = -1
-	print("Vector: "),
-	print(vec)
-	for offset1 in xrange(len(vec)):
-		for offset2 in xrange(offset1+1, len(vec)):
-			ll = 0
-			try:
-				while vec[offset1+ll] == vec[offset2+ll] and offset2+ll < len(vec)-1 and offset1+ll < offset2:
-					ll += 1
-			except Exception, e:
-				print("O1 = %d, O2 = %d, ll = %d" % (offset1, offset2, ll))
-				exit()
-			if ll > cur_max:
-				cur_max = ll
-				cur_offset = offset1
-	return cur_max, ''.join(vec[cur_offset:cur_offset+cur_max])
+	cur_max = 0
+	cur_offset = 0
+	# print("Vector: "),
+	# print(vec)
+	for offset in xrange(len(vec)):
+		for cycle_len in xrange(1, len(vec)-offset):
+			found_valid = True
+			init_vector = vec[offset:offset+cycle_len]
+			# print("Initial vector: "),
+			# print(init_vector)
+			if len(vec) - offset <= 2*cycle_len:
+				continue # too long for check
+			for offset2 in xrange(offset+cycle_len, len(vec)-cycle_len, cycle_len):
+				# print("."),
+				sub_vec2 = vec[offset2:offset2+cycle_len]
+				if init_vector != sub_vec2:
+					found_valid = False
+					break
+			# print("")
+			if found_valid:
+				return cycle_len, ''.join(map(lambda x: str(x), init_vector))
+	return cur_max, ''
 
 max_div = -1
 max_rep_pattern = ''
