@@ -8,13 +8,13 @@ def form_key(a,b,c):
 
 def check_pandigital(a,b,c):
 	all_nums = str(a)+str(b)+str(c)
-	if len(all_nums) < 9:
+	if len(all_nums) != 9:
 		return False
 	if '0' in all_nums:
 		return False
-	sum_num = reduce(lambda x, y: int(x)+int(y), all_nums)
-	if sum_num != 1+2+3+4+5+6+7+8+9:
-		return False
+	# sum_num = reduce(lambda x, y: int(x)+int(y), all_nums)
+	# if sum_num != 1+2+3+4+5+6+7+8+9:
+	# 	return False
 	for x in xrange(1,10):
 		if str(x) not in all_nums:
 			return False
