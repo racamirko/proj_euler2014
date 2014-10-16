@@ -23,7 +23,7 @@ def insert_key(key):
             end_limit = idx
 
 def fill_left(vec, idx):
-    vec[:idx] = False
+    vec[:idx+1] = False
     return vec
 
 def fill_right(vec, idx):
@@ -37,9 +37,9 @@ fill_rules = {
 }
 
 def first_true(vec):
-    for i in xrange(len(vec)):
+    for i in xrange(len(vec)-1, -1, -1):
         if vec[i] == True:
-            return i
+            return i+1
     return -1
 
 def insert_key2(key):
@@ -61,21 +61,20 @@ def insert_key2(key):
         if len(cur_key) == 0:
             cur_key += key[c_i]
             present.append(c_i)
-            pres_loc[c_i] = 0
+            pres_loc[c_i] = len(cur_key)-1
+            continue
         options = np.array([True]*len(cur_key))
         # narrow down the locations
         for cp_i in present:
             options = fill_rules[cp_i][c_i](options, pres_loc[cp_i])
         final_idx = first_true(options)
         if final_idx == -1:
-            cur_key.append += key[c_i]
+            cur_key += key[c_i]
             pres_loc[c_i] = len(cur_key)-1
         else:
             cur_key = cur_key[:final_idx] + key[c_i] + cur_key[final_idx:]
             pres_loc[c_i] = final_idx
         present.append(c_i)
-
-
 
 
 def check_key(key):
@@ -89,11 +88,15 @@ def check_key(key):
             last_idx = idx
     return True
 
+
 for line in data:
-    print(line)
+    print("%s -> " % line),
     if not check_key(line):
-        insert_key(line)
-        print("\t%s" % cur_key)
+        print("NO -> "),
+        insert_key2(line)
+    else:
+        print("OK -> "),
+    print(cur_key)
 
 
 print("Key %s" % cur_key)
