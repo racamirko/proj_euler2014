@@ -3,6 +3,8 @@ Sudoku solver.
 """
 
 from itertools import product
+from copy import deepcopy
+from collections import deque
 
 in_fname = "/home/raca/Downloads/p096_sudoku.txt"
 
@@ -12,6 +14,13 @@ class SudokuSolver(object):
     def __init__(self):
         self.table = {}
         self.fixed = {}
+        self.checkpoints_table = deque() # table state before branching
+        self.checkpoints_fixed = deque() # fixed state before branching
+        self.checkpoints_bad_decision = deque() # bad decision in the current branch
+        self.checkpoints_decision = deque() # branching decision
+        self.checkpoints_checkpoints_decision = deque() # ha, so meta of me...
+        self.bad_decisions = []
+        self.guess_threshold = 2 # how many combinations we need to have to make a guess, initially just 2-uncertainty are considered
         for x,y in product(range(9), repeat=2):
             self.table[(x,y)] = range(1,10)
             self.fixed[(x,y)] = False
@@ -42,6 +51,13 @@ class SudokuSolver(object):
                 pass
             except ValueError:
                 pass
+        self.check_inconsistent()
+
+    def check_inconsistent(self):
+        for x,y in product(range(9), repeat=2):
+            if len(self.table[(x,y)]) == 0:
+                print("\tDetected inconsistant state!")
+                self.pop_state()
 
     def insert_original_table(self,lines):
         x = 0
@@ -51,25 +67,69 @@ class SudokuSolver(object):
                     self.add_observation(x,y,int(line[y]))
             x += 1
 
-    def run(self):
-        new_information = True
-        while new_information:
-            new_information = False
+    def run(self, max_guesses=1000):
+        guess_no = 0
+        while guess_no < max_guesses: # just to avoid infinite loops and waiting
+            new_information = True
+            while new_information:
+                new_information = False
+                for x,y in product(range(9), repeat=2):
+                    if self.fixed[(x,y)] == False and len(self.table[(x,y)]) == 1:
+                        print("New automatic observation at (%d, %d) = %d" % (x+1,y+1, self.table[(x,y)][0]))
+                        self.add_observation(x,y,self.table[(x,y)][0])
+                        new_information = True
+                        # self.disp() # debug!
+                        break
+            # final check
+            print("No new information")
+            table_cleared = True
             for x,y in product(range(9), repeat=2):
-                if self.fixed[(x,y)] == False and len(self.table[(x,y)]) == 1:
-                    print("New automatic observation at (%d, %d) = %d" % (x+1,y+1, self.table[(x,y)][0]))
-                    self.add_observation(x,y,self.table[(x,y)][0])
-                    new_information = True
-                    # self.disp() # debug!
+                if self.fixed[(x,y)] == False:
+                    print("Unfinished business"),
+                    table_cleared = False # inconsistant state - not enough information for clear solving
                     break
-        # final check
-        print("No new information")
-        for x,y in product(range(9), repeat=2):
-            if self.fixed[(x,y)] == False:
-                print("Unfinished business")
-                return False # inconsistant state - not enough information for clear solving
-        print("Done.")
-        return True # success!
+            if table_cleared:
+                print("Done.")
+                return True # success!
+            else:
+                try:
+                    self.make_a_guess()
+                except RuntimeError:
+                    return False
+            guess_no += 1
+
+    def push_state(self, decision):
+        self.checkpoints_decision.append(decision)
+        self.checkpoints_checkpoints_decision.append(deepcopy(self.checkpoints_decision))
+        self.checkpoints_fixed.append(deepcopy(self.fixed))
+        self.checkpoints_table.append(deepcopy(self.table))
+        self.checkpoints_bad_decision.append(deepcopy(self.bad_decisions))
+
+    def pop_state(self):
+        self.table = self.checkpoints_table.pop()
+        self.fixed = self.checkpoints_fixed.pop()
+        self.checkpoints_decision = self.checkpoints_checkpoints_decision.pop()
+        self.bad_decisions = self.checkpoints_bad_decision.pop()
+        self.bad_decisions.append(self.checkpoints_decision.pop())
+        self.guess_threshold = 2
+
+    def make_a_guess(self):
+        found_guess = False
+        while not found_guess:
+            for x,y in product(range(9), repeat=2):
+                if self.fixed[(x,y)] == False and len(self.table[(x,y)]) == self.guess_threshold:
+                    # find a guess we didn't have
+                    for val in self.table[(x,y)]:
+                        comb_key = (x,y,val)
+                        if comb_key not in self.bad_decisions:
+                            print("Guessing (%d,%d) = %d" % (x+1, y+1, val))
+                            self.push_state(comb_key)
+                            self.add_observation(x,y,val)
+                            # self.disp()
+                            return
+            self.guess_threshold += 1
+            if self.guess_threshold > 9:
+                raise RuntimeError("Guess level went too high")
 
     def disp(self):
         print("-" * 21)
@@ -101,6 +161,7 @@ class SudokuSolver(object):
 in_hnd = open(in_fname)
 all_lines = in_hnd.readlines()
 total_solved = 0
+not_solved = []
 for sid in xrange(50):
     print("Solving #%02d" % (sid+1))
     solver = SudokuSolver()
@@ -109,8 +170,11 @@ for sid in xrange(50):
     solver.disp()
     if not solver.run():
         solver.disp_dillemas()
+        not_solved.append(sid)
     else:
         total_solved += 1
     solver.disp()
 
-print("Simple stuff solves: %d" % total_solved)
+print("With guessing, solves: %d" % total_solved) # 26
+print("Problems: "),
+print(not_solved) # [2, 5, 8, 9, 12, 13, 17, 21, 24, 25, 28, 29, 30, 32, 36, 40, 41, 42, 43, 44, 45, 47, 48, 49]
