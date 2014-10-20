@@ -85,8 +85,10 @@ class SudokuSolver(object):
             table_cleared = True
             for x,y in product(range(9), repeat=2):
                 if self.fixed[(x,y)] == False:
-                    print("Unfinished business"),
+                    print("Unfinished business")
                     table_cleared = False # inconsistant state - not enough information for clear solving
+                    # self.disp()
+                    # self.disp_dillemas()
                     break
             if table_cleared:
                 print("Done.")
@@ -112,10 +114,15 @@ class SudokuSolver(object):
         self.bad_decisions = self.checkpoints_bad_decision.pop()
         self.bad_decisions.append(self.checkpoints_decision.pop())
         self.guess_threshold = 2
+        # print("Guesses made: ")
+        # print(self.checkpoints_decision)
+        # print("Forbidden moves: ")
+        # print(self.bad_decisions)
 
     def make_a_guess(self):
         found_guess = False
         while not found_guess:
+            increase_thresh = True
             for x,y in product(range(9), repeat=2):
                 if self.fixed[(x,y)] == False and len(self.table[(x,y)]) == self.guess_threshold:
                     # find a guess we didn't have
@@ -127,7 +134,12 @@ class SudokuSolver(object):
                             self.add_observation(x,y,val)
                             # self.disp()
                             return
-            self.guess_threshold += 1
+                    # we eliminated all options for a single field - meaning the error is further up
+                    self.pop_state()
+                    increase_thresh = False
+                    break
+            if increase_thresh:
+                self.guess_threshold += 1
             if self.guess_threshold > 9:
                 raise RuntimeError("Guess level went too high")
 
@@ -155,6 +167,7 @@ class SudokuSolver(object):
     def get_sum(self):
         tmpsum = 0
         for i in xrange(3):
+            tmpsum *= 10
             tmpsum += self.table[(0,i)][0]
         return tmpsum
 
@@ -162,6 +175,7 @@ in_hnd = open(in_fname)
 all_lines = in_hnd.readlines()
 total_solved = 0
 not_solved = []
+total_sum = 0
 for sid in xrange(50):
     print("Solving #%02d" % (sid+1))
     solver = SudokuSolver()
@@ -170,11 +184,13 @@ for sid in xrange(50):
     solver.disp()
     if not solver.run():
         solver.disp_dillemas()
-        not_solved.append(sid)
+        not_solved.append(sid+1)
     else:
         total_solved += 1
+        total_sum += solver.get_sum()
     solver.disp()
 
 print("With guessing, solves: %d" % total_solved) # 26
 print("Problems: "),
-print(not_solved) # [2, 5, 8, 9, 12, 13, 17, 21, 24, 25, 28, 29, 30, 32, 36, 40, 41, 42, 43, 44, 45, 47, 48, 49]
+print(not_solved) # [3, 6, 9, 10, 13, 14, 18, 22, 25, 26, 29, 30, 31, 33, 37, 41, 42, 43, 44, 45, 46, 48, 49, 50]
+print("Sum: %d" % total_sum)
