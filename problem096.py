@@ -120,8 +120,7 @@ class SudokuSolver(object):
         # print(self.bad_decisions)
 
     def make_a_guess(self):
-        found_guess = False
-        while not found_guess:
+        while True:
             increase_thresh = True
             for x,y in product(range(9), repeat=2):
                 if self.fixed[(x,y)] == False and len(self.table[(x,y)]) == self.guess_threshold:
@@ -190,7 +189,7 @@ for sid in xrange(50):
         total_sum += solver.get_sum()
     solver.disp()
 
-print("With guessing, solves: %d" % total_solved) # 26
+print("With guessing, solves: %d" % total_solved) # 50!
 print("Problems: "),
-print(not_solved) # [3, 6, 9, 10, 13, 14, 18, 22, 25, 26, 29, 30, 31, 33, 37, 41, 42, 43, 44, 45, 46, 48, 49, 50]
-print("Sum: %d" % total_sum)
+print(not_solved)
+print("Sum: %d" % total_sum) # 24702
