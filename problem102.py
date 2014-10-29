@@ -1,5 +1,6 @@
 """
-
+see: http://tutorial.math.lamar.edu/Classes/CalcII/CrossProduct.aspx
+and : www.blackpawn.com/texts/pointinpoly/
 """
 
 import numpy as np
