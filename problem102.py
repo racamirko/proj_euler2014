@@ -3,10 +3,7 @@ see: http://tutorial.math.lamar.edu/Classes/CalcII/CrossProduct.aspx
 and : www.blackpawn.com/texts/pointinpoly/
 """
 
-import numpy as np
-import math
-
-in_fname = '/home/raca/Downloads/p102_triangles.txt'
+in_fname = 'p102_triangles.txt'
 
 def sign(val):
     if val == 0:
