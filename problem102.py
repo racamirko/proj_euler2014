@@ -8,51 +8,87 @@ import math
 
 in_fname = '/home/raca/Downloads/p102_triangles.txt'
 
+def sign(val):
+    if val == 0:
+        return 0
+    return val/abs(val)
+
 class Vec:
     """docstring for Vec"""
 
-    def __init__(self, x1, y1, x2, y2):
-        self.x1 = float(x1)
-        self.y1 = float(y1)
-        self.x2 = float(x2)
-        self.y2 = float(y2)
+    def __init__(self, x1, y1):
+        self.x = float(x1)
+        self.y = float(y1)
 
     def intensity(self):
-        return ( (self.x1-self.x2)**2.0 + (self.y1-self.y2)**2.0 )**0.5
+        return ( (self.x)**2.0 + (self.y)**2.0 )**0.5
 
-    def translate(self, dx, dy):
-        return Vec(self.x1 + dx, self.y1 + dy, self.x2 + dx, self.y2 + dy)
+    def add(self, dx, dy):
+        return Vec(self.x + dx, self.y + dy)
 
-    def ground_vec(self):
-        return Vec(0.0, 0.0, self.x2-self.x1, self.y2-self.y1)
+    def subtract(self, v):
+        return Vec(self.x-v.x, self.y-v.y)
 
-    def end_pt(self):
-        return self.x2, self.y2
-
-    def dist_origs(self, v2):
-        return self.x1 - v2.x1, self.y1 - v2.y1
+    def multiply(self, val):
+        return Vec(val*self.x, val*self.y)
 
     def angle_between(self, v2):
-        return math.acos(self.dot_prod(v2)/(self.intensity()*v2.intensity()))
+        raise NotImplementedError()
 
     def dot_prod(self, v2):
-        v1_gnd = self.ground_vec()
-        v2_gnd = v2.ground_vec()
-        return v1_gnd.x2*v2_gnd.x2+v1_gnd.y2*v2_gnd.y2
+        return self.x*v2.x+self.y*v2.y
         
     def cross(self, v2):
         assert isinstance(v2, Vec), "Ooops"
-        i_v1 = self.intensity()
-        i_v2 = v2.intensity()
-        angle = self.angle_between(v2)
-        return i_v1*i_v2*math.sin(angle)
+        return (self.x*v2.y - self.y*v2.x)
+
+class Triangle:
+
+    def __init__(self, x1, y1, x2, y2, x3, y3):
+        self.pts = []
+        self.pts.append(Vec(x1, y1))
+        self.pts.append(Vec(x2, y2))
+        self.pts.append(Vec(x3, y3))
+
+    def null_inside(self):
+        check_order = [(0,1,2), (1,2,0), (2,0,1)]
+        for comb in check_order:
+            gnd_vec = self.pts[comb[0]]
+            other_vec = self.pts[comb[1]]
+            check_vec = self.pts[comb[2]]
+            # remove gnd_vector
+            v = other_vec.subtract(gnd_vec)
+            check = check_vec.subtract(gnd_vec)
+            zero = gnd_vec.multiply(-1.0)
+            m1 = v.cross(check)
+            m2 = v.cross(zero)
+            if sign(m1) != sign(m2):
+                return False
+        return True
+
 
 def test_vec():
-    v1 = Vec(-1, -1, 3, -1)
-    v2_zero = Vec(-1, -1, 0, 0)
-    v2_lower = Vec(-1, -1, -2.113434, -2.5)
-    print("First mult: %.3f" % v1.cross(v2_zero) )
-    print("First mult: %.3f" % v1.cross(v2_lower) )
+    t1 = Triangle(-340, 495, -153, -910, 835, -947)
+    t2 = Triangle(-175, 41, -421, -714, 574, -645)
+    if t1.null_inside() == True:
+        print("First triangle correct")
+    else:
+        print("First traingle fails")
+    if t2.null_inside() == False:
+        print("Second triangle correct")
+    else:
+        print("Second traingle fails")
+
+
 
 if __name__ == '__main__':
-    test_vec()
+    # test_vec()
+    in_data = open(in_fname)
+    cnter = 0
+    for line in in_data.readlines():
+        vals = line.split(',')
+        int_vals = map(lambda x: int(x), vals)
+        t = Triangle(*int_vals)
+        if t.null_inside() == True:
+            cnter += 1
+    print("%d triangle contains the origin" % cnter)
